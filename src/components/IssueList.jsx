@@ -6,18 +6,30 @@ import IssueCard from "./IssueCard";
 const IssueList = ({ status, priority }) => {
   const [issues, setIssues] = useState([]);
 
-  useEffect(() => {
-    const q = query(collection(db, "issues"), orderBy("createdAt", "desc"));
+useEffect(() => {
+  const q = query(
+    collection(db, "issues"),
+    orderBy("createdAt", "desc")
+  );
 
-    return onSnapshot(q, (snap) => {
+  const unsubscribe = onSnapshot(
+    q,
+    (snap) => {
       setIssues(
-        snap.docs.map(doc => ({
+        snap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }))
       );
-    });
-  }, []);
+    },
+    (error) => {
+      console.error("Firestore error:", error.message);
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
+
 
   const filtered = issues
     .filter(i => status === "All" || i.status === status)

@@ -1,22 +1,35 @@
-import { collection, addDoc, getDocs } from "firebase/firestore";
-import { db, serverTimestamp } from "../firebase/firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
 export const createIssue = async (issue, userEmail) => {
-  const keywords = issue.title.toLowerCase().split(" ");
+  try {
+    const keywords = issue.title.toLowerCase().split(" ");
 
-  const snapshot = await getDocs(collection(db, "issues"));
-  const similar = snapshot.docs.some(doc =>
-    doc.data().keywords?.some(k => keywords.includes(k))
-  );
+    const snapshot = await getDocs(collection(db, "issues"));
 
-  if (similar) return { warning: true };
+    const similar = snapshot.docs.some((doc) =>
+      doc.data().keywords?.some((k) => keywords.includes(k))
+    );
 
-  await addDoc(collection(db, "issues"), {
-    ...issue,
-    createdBy: userEmail,
-    createdAt: serverTimestamp(),
-    keywords,
-  });
+    if (similar) {
+      return { warning: true };
+    }
 
-  return { success: true };
+    await addDoc(collection(db, "issues"), {
+      ...issue,
+      createdBy: userEmail,
+      createdAt: serverTimestamp(),
+      keywords,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Create issue error:", error.message);
+    return { error: error.message };
+  }
 };
